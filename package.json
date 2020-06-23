@@ -6,11 +6,16 @@
   "scripts": {
     "test": "echo \"test\""
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KeijiBranshi/rx-electron.git"
+  },
   "keywords": [
     "rxjs",
     "electron",
-    "ipc"
+    "ipc",
+    "observable"
   ],
-  "author": "Brandon Keiji",
+  "author": "Brandon Keiji <brandon.keiji@gmail.com>",
   "license": "MIT"
 }
