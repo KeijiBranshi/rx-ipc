@@ -24,17 +24,20 @@ function remoteSubscriptionEvents({
   const subscribed = fromEvent<[IpcSubscriber, CorrelationId]>(
     ipc,
     subscribe,
-    (event: IpcEvent, correlationId: string) => [event.sender, correlationId],
+    (event: IpcEvent, correlationId: string) => [event.sender, correlationId]
   );
   const unsubscribed = fromEvent(
     ipc,
     unsubscribe,
-    (_event: unknown, correlationId: string) => correlationId,
+    (_event: unknown, correlationId: string) => correlationId
   );
 
   return [subscribed, unsubscribed];
 }
 
+/**
+ * Written in RxJS v6 style, but exported as RxJS v5 (for now)
+ */
 export default function proxify(options: ProxyOptions) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
   return function proxifyOperator<T>(source: Observable<T>): Observable<T> {
@@ -43,14 +46,14 @@ export default function proxify(options: ProxyOptions) {
 
     const marks = onSubscribe.mergeMap(([subscriber, correlationId]) => {
       const correlatedUnsubscribe = onUnsubscribe.filter(
-        (id) => correlationId === id,
+        (id) => correlationId === id
       );
       const channels = ipcObserverChannels(channel, correlationId);
       return source
         .do(
           (next: T) => subscriber.send(channels.next, next),
           (e: Error) => subscriber.send(channels.error, e),
-          () => subscriber.send(channels.complete),
+          () => subscriber.send(channels.complete)
         )
         .takeUntil(correlatedUnsubscribe);
     });
@@ -59,5 +62,21 @@ export default function proxify(options: ProxyOptions) {
     return marks;
   };
 }
+
+/**
+ * For RxJS v5 syntax
+ * @param this
+ * @param options
+ */
+function proxifyRxV5<T>(this: Observable<T>, options: ProxyOptions) {
+  return proxify(options)(this);
+}
+
+declare module "rxjs/Observable" {
+  interface Observable<T> {
+    proxify: typeof proxifyRxV5;
+  }
+}
+Observable.prototype.proxify = proxifyRxV5;
 
 export { proxify };
