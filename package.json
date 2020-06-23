@@ -17,5 +17,12 @@
     "observable"
   ],
   "author": "Brandon Keiji <brandon.keiji@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "rxjs": "^5.5.12"
+  },
+  "devDependencies": {
+    "rollup": "^2.18.0",
+    "typescript": "^3.9.5"
+  }
 }
