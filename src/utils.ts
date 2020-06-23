@@ -1,9 +1,9 @@
-import { IpcRenderer, IpcMain, WebContents } from 'electron';
+import { IpcRenderer, IpcMain, WebContents } from "electron";
 
 export type PartialIpc = {
-  on: IpcRenderer['on'] | IpcMain['on'];
-  off: IpcRenderer['off'] | IpcMain['off'];
-  send: IpcRenderer['send'] | WebContents['send'];
+  on: IpcRenderer["on"] | IpcMain["on"];
+  off: IpcRenderer["off"] | IpcMain["off"];
+  send: IpcRenderer["send"] | WebContents["send"];
 };
 
 export type ProxyOptions = {
@@ -24,4 +24,13 @@ export function ipcObservableChannels(ipcChannel: string) {
     subscribe: `${ipcChannel}-subscribed`,
     unsubscribe: `${ipcChannel}-unsubscribed`,
   };
+}
+
+export function observeOn(
+  ipc: Pick<PartialIpc, "on" | "off">,
+  channel: string,
+  listener: (...args: any[]) => void
+) {
+  ipc.on(channel, listener);
+  return () => ipc.off(channel, listener);
 }

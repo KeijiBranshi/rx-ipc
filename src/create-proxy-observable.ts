@@ -1,15 +1,16 @@
-import { v4 as uuid } from 'node-uuid';
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
+import { v4 as uuid } from "node-uuid";
+import { Observable } from "rxjs/Observable";
+import { Observer } from "rxjs/Observer";
+import "rxjs/add/operator/mergeMap";
 
-import 'rxjs/add/operator/mergeMap';
+import { observeOn } from "./utils";
 
 import {
   PartialIpc,
   ProxyOptions,
   ipcObserverChannels,
   ipcObservableChannels,
-} from './utils';
+} from "./utils";
 
 export function createProxy<T>(options: ProxyOptions): Observable<T> {
   const { channel, ipc } = options;
@@ -18,18 +19,22 @@ export function createProxy<T>(options: ProxyOptions): Observable<T> {
     const { subscribe, unsubscribe } = ipcObservableChannels(channel);
     const { next, error, complete } = ipcObserverChannels(
       channel,
-      correlationId,
+      correlationId
     );
 
-    const teardownNext = observe(ipc, next, ({}, value: T) => {
+    const teardownNext = observeOn(ipc, next, ({}, value: T) => {
       try {
         observer.next(value);
       } catch (e) {
         observer.error(e);
       }
     });
-    const teardownError = observe(ipc, error, ({}, error: Error) => observer.error(error));
-    const teardownComplete = observe(ipc, complete, () => observer.complete());
+    const teardownError = observeOn(ipc, error, ({}, error: Error) =>
+      observer.error(error)
+    );
+    const teardownComplete = observeOn(ipc, complete, () =>
+      observer.complete()
+    );
 
     ipc.send(subscribe, correlationId);
     return () => {
@@ -39,13 +44,4 @@ export function createProxy<T>(options: ProxyOptions): Observable<T> {
       ipc.send(unsubscribe, correlationId);
     };
   });
-}
-
-function observe(
-  ipc: Pick<PartialIpc, 'on' | 'off'>,
-  channel: string,
-  listener: (...args: any[]) => void,
-) {
-  ipc.on(channel, listener);
-  return () => ipc.off(channel, listener);
 }
