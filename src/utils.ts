@@ -29,7 +29,7 @@ export function ipcObservableChannels(ipcChannel: string) {
 export function observeOn(
   ipc: Pick<PartialIpc, "on" | "off">,
   channel: string,
-  listener: (...args: any[]) => void
+  listener: (...args: any[]) => void,
 ) {
   ipc.on(channel, listener);
   return () => ipc.off(channel, listener);
