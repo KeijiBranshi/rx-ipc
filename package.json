@@ -4,7 +4,7 @@
   "description": "RxJS utilities for Electron JS",
   "main": "index.js",
   "scripts": {
-    "build": "rollup",
+    "build": "rollup -c",
     "test": "echo \"test\""
   },
   "repository": {
@@ -20,11 +20,15 @@
   "author": "Brandon Keiji <brandon.keiji@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "node-uuid": "^1.4.8",
     "rxjs": "^5.5.12"
   },
   "devDependencies": {
+    "@types/node-uuid": "0.0.28",
+    "electron": "^7.3.1",
     "rollup": "^2.18.0",
     "rollup-plugin-typescript2": "^0.27.1",
+    "tslib": "^2.0.0",
     "typescript": "^3.9.5"
   },
   "peerDependencies": {

@@ -2,6 +2,8 @@ import { v4 as uuid } from 'node-uuid';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
+import 'rxjs/add/operator/mergeMap';
+
 import { PartialIpc, ProxyOptions, ipcObserverChannels, ipcObservableChannels } from './utils';
 
 export function createProxy<T>(options: ProxyOptions): Observable<T> {
