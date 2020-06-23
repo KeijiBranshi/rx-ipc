@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rollup -c",
+    "prettier": "prettier --write",
     "test": "echo \"test\""
   },
   "repository": {
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/node-uuid": "0.0.28",
     "electron": "^7.3.1",
+    "prettier": "^2.0.5",
     "rollup": "^2.18.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "tslib": "^2.0.0",
