@@ -1,16 +1,15 @@
+import { IpcRendererEvent, IpcMainEvent } from 'electron';
+import { Observable } from 'rxjs/Observable';
+import { fromEvent } from 'rxjs/observable/fromEvent';
 import {
   ProxyOptions,
   ipcObservableChannels,
   ipcObserverChannels,
   PartialIpc,
-} from "./utils";
-
-import { IpcRendererEvent, IpcMainEvent } from "electron";
-import { Observable } from "rxjs/Observable";
-import { fromEvent } from "rxjs/observable/fromEvent";
-import "rxjs/add/operator/filter";
-import "rxjs/add/operator/do";
-import "rxjs/add/operator/takeUntil";
+} from './utils';
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/takeUntil';
 
 export function proxify(options: ProxyOptions) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
@@ -20,14 +19,14 @@ export function proxify(options: ProxyOptions) {
 
     const marks = onSubscribe.mergeMap(([subscriber, correlationId]) => {
       const correlatedUnsubscribe = onUnsubscribe.filter(
-        (id) => correlationId === id
+        (id) => correlationId === id,
       );
       const channels = ipcObserverChannels(channel, correlationId);
       return source
         .do(
           (next: T) => subscriber.send(channels.next, next),
           (e: Error) => subscriber.send(channels.error, e),
-          () => subscriber.send(channels.complete)
+          () => subscriber.send(channels.complete),
         )
         .takeUntil(correlatedUnsubscribe);
     });
@@ -39,7 +38,7 @@ export function proxify(options: ProxyOptions) {
 
 type IpcEvent = IpcMainEvent | IpcRendererEvent;
 type CorrelationId = string;
-type IpcSubscriber = Pick<PartialIpc, "send">;
+type IpcSubscriber = Pick<PartialIpc, 'send'>;
 type IpcSubscribeRequest = [IpcSubscriber, CorrelationId];
 
 function remoteSubscriptionEvents({
@@ -50,12 +49,12 @@ function remoteSubscriptionEvents({
   const subscribed = fromEvent<[IpcSubscriber, CorrelationId]>(
     ipc,
     subscribe,
-    (event: IpcEvent, correlationId: string) => [event.sender, correlationId]
+    (event: IpcEvent, correlationId: string) => [event.sender, correlationId],
   );
   const unsubscribed = fromEvent(
     ipc,
     unsubscribe,
-    ({}, correlationId: string) => correlationId
+    ({}, correlationId: string) => correlationId,
   );
 
   return [subscribed, unsubscribed];

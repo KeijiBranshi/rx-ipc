@@ -6,6 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "prettify": "prettier --write ./src",
+    "lint": "eslint --fix .",
     "test": "echo \"test\""
   },
   "repository": {
@@ -31,7 +32,9 @@
     "electron": "^7.3.1",
     "eslint": "^7.3.1",
     "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.0.5",
     "rollup": "^2.18.0",
     "rollup-plugin-eslint": "^7.0.0",
