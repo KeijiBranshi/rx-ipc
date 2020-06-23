@@ -3,9 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 
 import { PartialIpc, ProxyOptions, ipcObserverChannels, ipcObservableChannels } from './utils';
-import { IpcMark } from '../../renderer/ipcMonitor';
 
-export function createProxy(options: ProxyOptions & { channel: 'ipc-monitor' }): Observable<IpcMark>;
 export function createProxy<T>(options: ProxyOptions): Observable<T> {
   const { channel, ipc } = options;
   return Observable.create((observer: Observer<T>) => {
