@@ -26,5 +26,8 @@
     "rollup": "^2.18.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "typescript": "^3.9.5"
+  },
+  "peerDependencies": {
+    "electron": "^4.2.12"
   }
 }
