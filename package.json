@@ -1,0 +1,16 @@
+{
+  "name": "rx-electron",
+  "version": "0.1.0",
+  "description": "RxJS utilities for Electron JS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"test\""
+  },
+  "keywords": [
+    "rxjs",
+    "electron",
+    "ipc"
+  ],
+  "author": "Brandon Keiji",
+  "license": "MIT"
+}
