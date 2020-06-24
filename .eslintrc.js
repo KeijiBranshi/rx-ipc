@@ -17,10 +17,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    "linebreak-style": [
-      "error",
-      process.platform === "win32" ? "windows" : "unix",
-    ],
+    "linebreak-style": ["error", "unix"],
     quotes: [2, "double", "avoid-escape"],
     "import/no-extraneous-dependencies": [
       "error",
