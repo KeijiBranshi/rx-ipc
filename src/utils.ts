@@ -6,9 +6,11 @@ export type PartialIpc = {
   send: IpcRenderer["send"] | WebContents["send"];
 };
 
+type UuidGenerator = () => string;
 export type ProxyOptions = {
   channel: string;
   ipc: PartialIpc;
+  uuid: UuidGenerator;
 };
 
 type ObserverChannels = {

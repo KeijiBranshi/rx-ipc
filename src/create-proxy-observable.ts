@@ -1,4 +1,3 @@
-import { v4 as uuid } from "node-uuid";
 import { Observable } from "rxjs/Observable";
 import { Observer } from "rxjs/Observer";
 import "rxjs/add/operator/mergeMap";
@@ -10,7 +9,7 @@ import {
 } from "./utils";
 
 export default function createProxy<T>(options: ProxyOptions): Observable<T> {
-  const { channel, ipc } = options;
+  const { channel, ipc, uuid } = options;
   return Observable.create((observer: Observer<T>) => {
     const subscriptionId = uuid();
     const { subscribe, unsubscribe } = ipcObservableChannels(channel);
