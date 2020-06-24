@@ -2,8 +2,11 @@
   "name": "rx-electron",
   "version": "0.2.0",
   "description": "RxJS utilities for Electron JS",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "rollup -c",
+    "prettify": "prettier --write ./src",
+    "lint": "eslint --fix ./src",
     "test": "echo \"test\""
   },
   "repository": {
@@ -17,5 +20,29 @@
     "observable"
   ],
   "author": "Brandon Keiji <brandon.keiji@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "node-uuid": "^1.4.8",
+    "rxjs": "^5.5.12"
+  },
+  "devDependencies": {
+    "@types/node-uuid": "0.0.28",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "electron": "^7.3.1",
+    "eslint": "^7.3.1",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.0.5",
+    "rollup": "^2.18.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-typescript2": "^0.27.1",
+    "tslib": "^2.0.0",
+    "typescript": "^3.9.5"
+  },
+  "peerDependencies": {
+    "electron": "^4.2.12"
+  }
 }
