@@ -17,7 +17,7 @@ export default function createProxy<T>(options: ProxyOptions): Observable<T> {
     const { subscribe, unsubscribe } = ipcObservableChannels(channel);
     const { next, error, complete } = ipcObserverChannels(
       channel,
-      correlationId
+      correlationId,
     );
 
     const teardownNext = observeOn(ipc, next, (_event, value: T) => {
@@ -27,12 +27,8 @@ export default function createProxy<T>(options: ProxyOptions): Observable<T> {
         observer.error(e);
       }
     });
-    const teardownError = observeOn(ipc, error, (_event, e: Error) =>
-      observer.error(e)
-    );
-    const teardownComplete = observeOn(ipc, complete, () =>
-      observer.complete()
-    );
+    const teardownError = observeOn(ipc, error, (_event, e: Error) => observer.error(e));
+    const teardownComplete = observeOn(ipc, complete, () => observer.complete());
 
     ipc.send(subscribe, correlationId);
     return () => {
