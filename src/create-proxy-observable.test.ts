@@ -47,63 +47,62 @@ describe("createProxy Tests", () => {
     );
   });
 
-  const observer = {
-    next: (value) => expect(value).toEqual(mockValue),
-    error: (err) => expect(err).toEqual(mockValue),
-    complete: () => expect(true).toEqual(true),
-  };
-  Object.entries(observer).forEach(([type: "next" | "error" | "complete", listener]) => {
-    const expectedIpcChannel = `${channel}-${mockSubscriptionId}-${type}`;
-    it(`should call observer.${type} when ${type} signal comes through ipc`, () => {
-      expect.assertions(1);
-      const mockValue = "value";
+  ["next", "error", "complete"].forEach(
+    (type: "next" | "error" | "complete") => {
+      const expectedIpcChannel = `${channel}-${mockSubscriptionId}-${type}`;
+      it(`should call observer.${type} when ${type} signal comes through ipc`, () => {
+        expect.assertions(1);
+        const mockValue = "value";
 
-      const sub = createProxy({ ipc, channel, uuid }).subscribe({
-        [type]: listener,
+        const sub = createProxy({ ipc, channel, uuid }).subscribe({
+          next: (value) => expect(value).toEqual(mockValue),
+          error: (err) => expect(err).toEqual(mockValue),
+          complete: () => expect(true).toEqual(true),
+        });
+
+        const {
+          on: {
+            mock: { calls },
+          },
+        } = ipc;
+        calls.forEach(([observedChannel, callback]) => {
+          if (observedChannel === expectedIpcChannel) {
+            callback({}, mockValue);
+          }
+        });
+
+        sub.unsubscribe();
       });
 
-      const {
-        on: {
-          mock: { calls },
-        },
-      } = ipc;
-      calls.forEach(([observedChannel, callback]) => {
-        if (observedChannel === expectedIpcChannel) {
-          callback({}, mockValue);
-        }
+      it(`should remove ${type} listener on unsubscribe`, () => {
+        expect.assertions(1);
+
+        const sub = createProxy({ ipc, channel, uuid }).subscribe();
+
+        const {
+          on: {
+            mock: { calls: onCalls },
+          },
+        } = ipc;
+
+        const [, registeredCallback] = onCalls.find(
+          ([observedChannel]) => observedChannel === expectedIpcChannel
+        );
+
+        sub.unsubscribe();
+        const {
+          off: {
+            mock: { calls: offCalls },
+          },
+        } = ipc;
+        const teardownCall = offCalls.find(
+          ([observedChannel, callback]) =>
+            observedChannel === expectedIpcChannel &&
+            callback === registeredCallback
+        );
+
+        expect(teardownCall).toBeDefined();
       });
-
-      sub.unsubscribe();
-    });
-
-    it(`should remove ${type} listener on unsubscribe`, () => {
-      expect.assertions(1);
-
-      const sub = createProxy({ ipc, channel, uuid }).subscribe();
-
-      const {
-        on: {
-          mock: { calls: onCalls },
-        },
-      } = ipc;
-
-      const [, registeredCallback] = onCalls.find(
-        ([observedChannel]) => observedChannel === expectedIpcChannel
-      );
-
-      sub.unsubscribe();
-      const {
-        off: {
-          mock: { calls: offCalls },
-        },
-      } = ipc;
-      const teardownCall = offCalls.find(
-        ([observedChannel, callback]) =>
-          observedChannel === expectedIpcChannel &&
-          callback === registeredCallback
-      );
-
-      expect(teardownCall).toBeDefined();
-    });
-  });
+    }
+  );
 });
