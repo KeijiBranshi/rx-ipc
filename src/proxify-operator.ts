@@ -24,12 +24,12 @@ function remoteSubscriptionEvents({
   const subscribed = fromEvent<[IpcSubscriber, CorrelationId]>(
     ipc,
     subscribe,
-    (event: IpcEvent, correlationId: string) => [event.sender, correlationId],
+    (event: IpcEvent, correlationId: string) => [event.sender, correlationId]
   );
   const unsubscribed = fromEvent(
     ipc,
     unsubscribe,
-    (_event: unknown, correlationId: string) => correlationId,
+    (_event: unknown, correlationId: string) => correlationId
   );
 
   return [subscribed, unsubscribed];
@@ -46,14 +46,14 @@ export default function proxify(options: ProxyOptions) {
 
     const marks = onSubscribe.mergeMap(([subscriber, correlationId]) => {
       const correlatedUnsubscribe = onUnsubscribe.filter(
-        (id) => correlationId === id,
+        (id) => correlationId === id
       );
       const channels = ipcObserverChannels(channel, correlationId);
       return source
         .do(
           (next: T) => subscriber.send(channels.next, next),
           (e: Error) => subscriber.send(channels.error, e),
-          () => subscriber.send(channels.complete),
+          () => subscriber.send(channels.complete)
         )
         .takeUntil(correlatedUnsubscribe);
     });

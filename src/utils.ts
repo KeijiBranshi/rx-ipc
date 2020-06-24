@@ -18,12 +18,12 @@ type ObserverChannels = {
 };
 export function ipcObserverChannels(
   ipcChannel: string,
-  correlationId: string,
+  subscriptionId: string
 ): ObserverChannels {
   return {
-    next: `${ipcChannel}-${correlationId}-next`,
-    error: `${ipcChannel}-${correlationId}-error`,
-    complete: `${ipcChannel}-${correlationId}-complete`,
+    next: `${ipcChannel}-${subscriptionId}-next`,
+    error: `${ipcChannel}-${subscriptionId}-error`,
+    complete: `${ipcChannel}-${subscriptionId}-complete`,
   };
 }
 
@@ -42,7 +42,7 @@ type TeardownLogic = () => void;
 export function observeOn(
   ipc: Pick<PartialIpc, "on" | "off">,
   channel: string,
-  listener: (...args: any[]) => void,
+  listener: (...args: any[]) => void
 ): TeardownLogic {
   ipc.on(channel, listener);
   return () => ipc.off(channel, listener);
