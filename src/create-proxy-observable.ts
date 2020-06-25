@@ -1,8 +1,6 @@
-import { v4 as uuid } from "node-uuid";
 import { Observable } from "rxjs/Observable";
 import { Observer } from "rxjs/Observer";
 import "rxjs/add/operator/mergeMap";
-
 import {
   observeOn,
   ProxyOptions,
@@ -11,13 +9,13 @@ import {
 } from "./utils";
 
 export default function createProxy<T>(options: ProxyOptions): Observable<T> {
-  const { channel, ipc } = options;
+  const { channel, ipc, uuid } = options;
   return Observable.create((observer: Observer<T>) => {
-    const correlationId = uuid();
+    const subscriptionId = uuid();
     const { subscribe, unsubscribe } = ipcObservableChannels(channel);
     const { next, error, complete } = ipcObserverChannels(
       channel,
-      correlationId,
+      subscriptionId
     );
 
     const teardownNext = observeOn(ipc, next, (_event, value: T) => {
@@ -27,15 +25,19 @@ export default function createProxy<T>(options: ProxyOptions): Observable<T> {
         observer.error(e);
       }
     });
-    const teardownError = observeOn(ipc, error, (_event, e: Error) => observer.error(e));
-    const teardownComplete = observeOn(ipc, complete, () => observer.complete());
+    const teardownError = observeOn(ipc, error, (_event, e: Error) =>
+      observer.error(e)
+    );
+    const teardownComplete = observeOn(ipc, complete, () =>
+      observer.complete()
+    );
 
-    ipc.send(subscribe, correlationId);
+    ipc.send(subscribe, subscriptionId);
     return () => {
       teardownNext();
       teardownError();
       teardownComplete();
-      ipc.send(unsubscribe, correlationId);
+      ipc.send(unsubscribe, subscriptionId);
     };
   });
 }
