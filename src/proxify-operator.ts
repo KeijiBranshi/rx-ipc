@@ -16,6 +16,10 @@ type CorrelationId = string;
 type IpcSubscriber = Pick<PartialIpc, "send">;
 type IpcSubscribeRequest = [IpcSubscriber, CorrelationId];
 
+type ProxifyOptions<T> = ProxyOptions & {
+  preRouteFilter?: (channel: string, payload: T) => boolean;
+};
+
 function remoteSubscriptionEvents({
   channel,
   ipc,
@@ -24,12 +28,12 @@ function remoteSubscriptionEvents({
   const subscribed = fromEvent<[IpcSubscriber, CorrelationId]>(
     ipc,
     subscribe,
-    (event: IpcEvent, correlationId: string) => [event.sender, correlationId]
+    (event: IpcEvent, subscriberId: string) => [event.sender, subscriberId]
   );
   const unsubscribed = fromEvent(
     ipc,
     unsubscribe,
-    (_event: unknown, correlationId: string) => correlationId
+    (_event: unknown, subscriberId: string) => subscriberId
   );
 
   return [subscribed, unsubscribed];
@@ -38,18 +42,23 @@ function remoteSubscriptionEvents({
 /**
  * Written in RxJS v6 style, but exported as RxJS v5 (for now)
  */
-export default function proxify(options: ProxyOptions) {
+export default function proxify<T>(options: ProxifyOptions<T>) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
-  return function proxifyOperator<T>(source: Observable<T>): Observable<T> {
-    const { channel } = options;
+  return function proxifyOperator(source: Observable<T>): Observable<T> {
+    const { channel, preRouteFilter } = options;
     const [onSubscribe, onUnsubscribe] = remoteSubscriptionEvents(options);
 
-    const marks = onSubscribe.mergeMap(([subscriber, correlationId]) => {
+    const marks = onSubscribe.mergeMap(([subscriber, subscriberId]) => {
       const correlatedUnsubscribe = onUnsubscribe.filter(
-        (id) => correlationId === id
+        (unsubscriberId) => subscriberId === unsubscriberId
       );
-      const channels = ipcObserverChannels(channel, correlationId);
+      const channels = ipcObserverChannels(channel, subscriberId);
       return source
+        .filter((next) =>
+          typeof preRouteFilter === "function"
+            ? preRouteFilter(channels.next, next)
+            : true
+        )
         .do(
           (next: T) => subscriber.send(channels.next, next),
           (e: Error) => subscriber.send(channels.error, e),
