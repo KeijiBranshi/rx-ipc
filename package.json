@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "prettify": "prettier --write ./src",
-    "lint": "eslint --fix ./src/create-proxy-observable.ts",
+    "lint": "eslint --fix ./src",
     "test": "jest",
     "test:watch": "jest --watch"
   },
