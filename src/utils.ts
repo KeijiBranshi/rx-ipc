@@ -40,6 +40,7 @@ export function ipcObservableChannels(ipcChannel: string): ObservableChannels {
   };
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type TeardownLogic = () => void;
 export function observeOn(
   ipc: Pick<PartialIpc, "on" | "off">,
@@ -49,3 +50,4 @@ export function observeOn(
   ipc.on(channel, listener);
   return () => ipc.off(channel, listener);
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
