@@ -10,33 +10,55 @@ import {
 import "rxjs/add/operator/filter";
 import "rxjs/add/operator/do";
 import "rxjs/add/operator/takeUntil";
+import "rxjs/add/operator/take";
+import "rxjs/add/operator/mergeMap";
+import "rxjs/add/operator/map";
+import { Observer } from "rxjs/Observer";
 
 type IpcEvent = IpcMainEvent | IpcRendererEvent;
-type CorrelationId = string;
-type IpcSubscriber = Pick<PartialIpc, "send">;
-type IpcSubscribeRequest = [IpcSubscriber, CorrelationId];
+type IpcSender = Pick<PartialIpc, "send">;
+type ObserverId = string;
+
+type ProxyObserver<T> = Observer<T> & {
+  channel: string;
+  unsubscribed: Observable<ObserverId>;
+};
 
 type ProxifyOptions<T> = ProxyOptions & {
   preRouteFilter?: (channel: string, payload: T) => boolean;
 };
 
-function remoteSubscriptionEvents({
+function onProxyObservers<T>({
   channel,
   ipc,
-}: ProxyOptions): [Observable<IpcSubscribeRequest>, Observable<CorrelationId>] {
+}: ProxifyOptions<T>): Observable<ProxyObserver<T>> {
   const { subscribe, unsubscribe } = ipcObservableChannels(channel);
-  const subscribed = fromEvent<[IpcSubscriber, CorrelationId]>(
+  const unsubscribed = (targetId: string) =>
+    fromEvent<ObserverId>(
+      ipc,
+      unsubscribe,
+      (_event: unknown, observerId: string) => observerId
+    )
+      .filter((observerId) => observerId === targetId)
+      .take(1);
+  const subscribed = fromEvent<[ObserverId, IpcSender]>(
     ipc,
     subscribe,
-    (event: IpcEvent, subscriberId: string) => [event.sender, subscriberId]
-  );
-  const unsubscribed = fromEvent(
-    ipc,
-    unsubscribe,
-    (_event: unknown, subscriberId: string) => subscriberId
+    (event: IpcEvent, observerId: string) => [observerId, event.sender]
   );
 
-  return [subscribed, unsubscribed];
+  return subscribed.map(([observerId, sender]) => {
+    const channels = ipcObserverChannels(channel, observerId);
+    const observer: ProxyObserver<T> = {
+      next: (next: T) => sender.send(channels.next, next),
+      error: (e: Error) => sender.send(channels.error, e),
+      complete: () => sender.send(channels.complete),
+      unsubscribed: unsubscribed(observerId),
+      channel: channels.next,
+    };
+
+    return observer;
+  });
 }
 
 /**
@@ -45,30 +67,19 @@ function remoteSubscriptionEvents({
 export default function proxify<T>(options: ProxifyOptions<T>) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
   return function proxifyOperator(source: Observable<T>): Observable<T> {
-    const { channel, preRouteFilter } = options;
-    const [onSubscribe, onUnsubscribe] = remoteSubscriptionEvents(options);
+    const { preRouteFilter } = options;
 
-    const marks = onSubscribe.mergeMap(([subscriber, subscriberId]) => {
-      const correlatedUnsubscribe = onUnsubscribe.filter(
-        (unsubscriberId) => subscriberId === unsubscriberId
-      );
-      const channels = ipcObserverChannels(channel, subscriberId);
+    return onProxyObservers(options).mergeMap((proxyObserver) => {
+      // for each new proxyObserver
       return source
         .filter((next) =>
           typeof preRouteFilter === "function"
-            ? preRouteFilter(channels.next, next)
+            ? preRouteFilter(proxyObserver.channel, next)
             : true
         )
-        .do(
-          (next: T) => subscriber.send(channels.next, next),
-          (e: Error) => subscriber.send(channels.error, e),
-          () => subscriber.send(channels.complete)
-        )
-        .takeUntil(correlatedUnsubscribe);
+        .do(proxyObserver) // route emissions over to proxy observer
+        .takeUntil(proxyObserver.unsubscribed);
     });
-
-    // reroute all marks to MainProcess for aggregation
-    return marks;
   };
 }
 
