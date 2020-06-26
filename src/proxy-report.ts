@@ -24,10 +24,12 @@ function completeReport<T>(): ProxyReport<T> {
   };
 }
 
-export function mapToProxyReport<T>(this: Observable<T>) {
-  const source = this;
-  return source
-    .map((payload) => nextReport(payload)) // for routed "next" payloads
+export function mapToProxyReport<T>(
+  this: Observable<T>
+): Observable<ProxyReport<T>> {
+  return this.map((payload) => nextReport(payload)) // for routed "next" payloads
     .catch((e) => of(errorReport<T>(e))) // for routed "error" payloads
     .concat(of(completeReport())); // for routed "complete" signals
 }
+
+export default mapToProxyReport;

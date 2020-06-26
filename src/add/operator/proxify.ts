@@ -1,6 +1,6 @@
 import { Observable } from "rxjs/Observable";
+import { proxify } from "../../index";
 import { ProxifyOptions } from "../../types";
-import { proxify } from "../../proxify-operator";
 
 /**
  * For RxJS v5 syntax

@@ -1,9 +1,9 @@
 import { Observable } from "rxjs/Observable";
-import { mapToProxyReport } from "../../proxy-report";
+import operator from "../../proxy-report";
 
 declare module "rxjs/Observable" {
   interface Observable<T> {
-    mapToProxyReport: typeof mapToProxyReport;
+    mapToProxyReport: typeof operator;
   }
 }
-Observable.prototype.mapToProxyReport = mapToProxyReport;
+Observable.prototype.mapToProxyReport = operator;
