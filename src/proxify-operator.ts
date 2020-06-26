@@ -1,6 +1,7 @@
 import { IpcRendererEvent, IpcMainEvent } from "electron";
 import { Observable } from "rxjs/Observable";
 import { fromEvent } from "rxjs/observable/fromEvent";
+import { Observer } from "rxjs/Observer";
 import {
   ProxyOptions,
   ipcObservableChannels,
@@ -13,7 +14,6 @@ import "rxjs/add/operator/takeUntil";
 import "rxjs/add/operator/take";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
-import { Observer } from "rxjs/Observer";
 
 type IpcEvent = IpcMainEvent | IpcRendererEvent;
 type IpcSender = Pick<PartialIpc, "send">;
