@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest Tests",
+      "program": "${workspaceRoot}/node_modules/.bin/jest",
+      "args": ["-i"],
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}
