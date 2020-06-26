@@ -1,3 +1,4 @@
+import { zip } from "lodash";
 import { marbles } from "rxjs-marbles";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { PartialIpc } from "./utils";
@@ -35,7 +36,7 @@ describe("Proxify Operator Tests", () => {
       const mockNever = m.cold("-");
 
       (fromEvent as jest.Mock).mockImplementation(
-        ({}, actualChannel: string) => {
+        (_target: unknown, actualChannel: string) => {
           if (
             actualChannel.includes("-subscribed") &&
             actualChannel.includes(channel)
@@ -66,13 +67,14 @@ describe("Proxify Operator Tests", () => {
       const mockNever = m.cold("-");
 
       (fromEvent as jest.Mock).mockImplementation(
-        ({}, actualChannel: string) => {
+        (_target: unknown, actualChannel: string) => {
           if (
             actualChannel.includes("-subscribed") &&
             actualChannel.includes(channel)
           ) {
             return mockIpcSubs;
-          } else if (
+          }
+          if (
             actualChannel.includes("-unsubscribed") &&
             actualChannel.includes(channel)
           ) {
@@ -98,15 +100,17 @@ describe("Proxify Operator Tests", () => {
       const mockUnsubs = m.cold("-");
       const mockEmpty = m.cold("|");
 
-      (fromEvent as jest.Mock).mockImplementation(({}, ch: string) => {
-        if (ch.includes("-unsubscribed")) {
-          return mockUnsubs;
+      (fromEvent as jest.Mock).mockImplementation(
+        (_target: unknown, ch: string) => {
+          if (ch.includes("-unsubscribed")) {
+            return mockUnsubs;
+          }
+          if (ch.includes("-subscribed")) {
+            return mockSubs;
+          }
+          return mockEmpty;
         }
-        if (ch.includes("-subscribed")) {
-          return mockSubs;
-        }
-        return mockEmpty;
-      });
+      );
 
       const destination = source.proxify({ ipc, uuid, channel });
 
@@ -122,7 +126,7 @@ describe("Proxify Operator Tests", () => {
       const ipcSubs = m.cold("---a-bc------", subscriberValues);
       const ipcUnsubs = m.hot("------------b---");
 
-      const fromEventImpl = ({}, ch: string) => {
+      const fromEventImpl = (_target: unknown, ch: string) => {
         if (ch.includes("-unsubscribed")) {
           return ipcUnsubs;
         }
@@ -150,8 +154,6 @@ describe("Proxify Operator Tests", () => {
     })
   );
 
-  it(`should have sent ${"placeholder"} over subscriber-correlated ipc channel if result observable emits`, () => {});
-
   it(
     "should emit if no preRouteFilter provided",
     marbles((m) => {
@@ -160,7 +162,7 @@ describe("Proxify Operator Tests", () => {
       const mockNever = m.cold("-");
 
       (fromEvent as jest.Mock).mockImplementation(
-        ({}, actualChannel: string) => {
+        (_target: unknown, actualChannel: string) => {
           if (
             actualChannel.includes("-subscribed") &&
             actualChannel.includes(channel)
@@ -184,7 +186,7 @@ describe("Proxify Operator Tests", () => {
       const never = m.cold("-");
 
       (fromEvent as jest.Mock).mockImplementation(
-        ({}, actualChannel: string) => {
+        (_target: unknown, actualChannel: string) => {
           if (
             actualChannel.includes("-subscribed") &&
             actualChannel.includes(channel)
@@ -212,7 +214,7 @@ describe("Proxify Operator Tests", () => {
       const ipcSubs = m.hot("a", subscriberValues);
       const never = m.cold("-");
 
-      const fromEventImpl = ({}, actualChannel: string) => {
+      const fromEventImpl = (_target: unknown, actualChannel: string) => {
         if (
           actualChannel.includes("-subscribed") &&
           actualChannel.includes(channel)
@@ -230,6 +232,50 @@ describe("Proxify Operator Tests", () => {
         preRouteFilter: () => false,
       });
       m.expect(destination).toBeObservable(never);
+    })
+  );
+
+  it(
+    `should have sent destination values over ipc`,
+    marbles((m) => {
+      const source = m.hot("-x-----y-");
+      // a subscribes, sends over x
+      // b subscribes, both a and b send over y
+      const subs = m.cold("a----b---", subscriberValues);
+      const fromEventImpl = (_target: unknown, actualChannel: string) =>
+        actualChannel.includes("-subscribed") ? subs : m.cold("-");
+      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+
+      const destination = source.proxify({ ipc, channel, uuid });
+
+      m.expect(destination).toBeObservable("-x-----(yy)");
+      m.flush();
+
+      expect(sender.send).toHaveBeenCalledWith(`${channel}-${"a"}-next`, "x");
+      expect(sender.send).toHaveBeenCalledTimes(3);
+
+      const expectedCalls: [string, string][] = [
+        [`${channel}-${"a"}-next`, "x"],
+        [`${channel}-${"a"}-next`, "y"],
+        [`${channel}-${"b"}-next`, "y"],
+      ];
+      const actualCalls = sender.send.mock.calls;
+
+      zip<[string, string], [string, string]>(
+        actualCalls,
+        expectedCalls
+      ).forEach(([actualArgs, expectedArgs]) => {
+        if (!(actualArgs && expectedArgs)) {
+          fail(
+            "Expected number of calls does not align with actual number of calls"
+          );
+        }
+        const [channel, payload] = actualArgs;
+        const [expectedChannel, expectedPayload] = expectedArgs;
+
+        expect(channel).toEqual(expectedChannel);
+        expect(payload).toEqual(expectedPayload);
+      });
     })
   );
 });
