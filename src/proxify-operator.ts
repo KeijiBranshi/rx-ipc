@@ -9,7 +9,7 @@ import "rxjs/add/operator/takeUntil";
 import "rxjs/add/operator/take";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
-import "./add/operator/mapToProxyReport";
+import "./proxy-report-operator";
 
 import { PartialIpc, ProxifyOptions, ProxyReport } from "./types";
 import { ipcObservableChannels, ipcObserverChannels } from "./utils";
