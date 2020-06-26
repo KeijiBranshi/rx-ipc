@@ -24,17 +24,10 @@ function completeReport<T>(): ProxyReport<T> {
   };
 }
 
-function mapToProxyReport<T>(this: Observable<T>) {
+export function mapToProxyReport<T>(this: Observable<T>) {
   const source = this;
   return source
     .map((payload) => nextReport(payload)) // for routed "next" payloads
     .catch((e) => of(errorReport<T>(e))) // for routed "error" payloads
     .concat(of(completeReport())); // for routed "complete" signals
 }
-
-declare module "rxjs/Observable" {
-  interface Observable<T> {
-    mapToProxyReport: typeof mapToProxyReport;
-  }
-}
-Observable.prototype.mapToProxyReport = mapToProxyReport;

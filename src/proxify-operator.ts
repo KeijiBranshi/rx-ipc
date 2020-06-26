@@ -3,8 +3,7 @@ import { Observable } from "rxjs/Observable";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observer } from "rxjs/Observer";
 import { ipcObservableChannels, ipcObserverChannels } from "./utils";
-import { PartialIpc, ProxyOptions, ProxyReport } from "./types";
-import "./proxy-report";
+import { PartialIpc, ProxifyOptions, ProxyReport } from "./types";
 
 import "rxjs/add/operator/filter";
 import "rxjs/add/operator/do";
@@ -12,6 +11,7 @@ import "rxjs/add/operator/takeUntil";
 import "rxjs/add/operator/take";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
+import "./add/operator/mapToProxyReport";
 
 type IpcEvent = IpcMainEvent | IpcRendererEvent;
 type IpcSender = Pick<PartialIpc, "send">;
@@ -20,10 +20,6 @@ type ObserverId = string;
 type ProxyObserver<T> = Observer<T> & {
   channel: string;
   unsubscribed: Observable<ObserverId>;
-};
-
-type ProxifyOptions<T> = ProxyOptions & {
-  preRouteFilter?: (channel: string, payload: T) => boolean;
 };
 
 function onProxyObservers<T>({
@@ -85,21 +81,5 @@ export default function proxify<T>(options: ProxifyOptions<T>) {
     );
   };
 }
-
-/**
- * For RxJS v5 syntax
- * @param this
- * @param options
- */
-function proxifyRxV5<T>(this: Observable<T>, options: ProxifyOptions<T>) {
-  return proxify(options)(this);
-}
-
-declare module "rxjs/Observable" {
-  interface Observable<T> {
-    proxify: typeof proxifyRxV5;
-  }
-}
-Observable.prototype.proxify = proxifyRxV5;
 
 export { proxify };

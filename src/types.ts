@@ -28,3 +28,7 @@ export type ProxyOptions = {
   ipc: PartialIpc;
   uuid: UuidGenerator;
 };
+
+export type ProxifyOptions<T> = ProxyOptions & {
+  preRouteFilter?: (channel: string, payload: T) => boolean;
+};
