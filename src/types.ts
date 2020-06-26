@@ -3,6 +3,7 @@ import { IpcRenderer, IpcMain, WebContents } from "electron";
 export type ProxyReport<T> =
   | {
       observer: string;
+      payload?: unknown;
     }
   | {
       observer: "next";
@@ -14,6 +15,7 @@ export type ProxyReport<T> =
     }
   | {
       observer: "complete";
+      payload?: undefined;
     };
 
 export type PartialIpc = {

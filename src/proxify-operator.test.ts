@@ -1,8 +1,10 @@
 import { zip } from "lodash";
 import { marbles } from "rxjs-marbles";
+import { Observable } from "rxjs";
+import "rxjs/add/operator/pluck";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { PartialIpc } from "./types";
-import "./proxify-operator";
+import "./add/operator/proxify";
 
 jest.mock("rxjs/observable/fromEvent");
 
@@ -21,6 +23,20 @@ describe("Proxify Operator Tests", () => {
     a: ["a", sender],
     b: ["b", sender],
     c: ["c", sender],
+  };
+
+  const mockFromEvent = (
+    ipcSubs: Observable<unknown>,
+    ipcUnsubs: Observable<unknown>,
+    fallback: Observable<unknown>
+  ) => {
+    const fromEventImpl = (_target: unknown, actualChannel: string) =>
+      actualChannel.includes("-subscribed")
+        ? ipcSubs
+        : actualChannel.includes("-unsubscribed")
+        ? ipcUnsubs
+        : fallback;
+    (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
   };
 
   afterEach(() => {
@@ -55,7 +71,7 @@ describe("Proxify Operator Tests", () => {
   );
 
   it(
-    "should unsubscribe from source source if proxy observer unsubscribes",
+    "should unsubscribe from source if proxy observer unsubscribes",
     marbles((m) => {
       const source = m.cold("--------------");
       // note: in RxJS 6, whitespaces dont count towards subscription time frames
@@ -84,10 +100,78 @@ describe("Proxify Operator Tests", () => {
         }
       );
 
-      const destination = source.proxify({ ipc, uuid, channel });
+      const destination = source
+        .proxify({ ipc, uuid, channel })
+        .pluck("payload");
 
       m.expect(destination).toBeObservable(source);
       m.expect(source).toHaveSubscriptions([subA, subB, subC]);
+    })
+  );
+
+  it(
+    "should emit next reports from the source",
+    marbles((m) => {
+      const source = m.hot("---a-b-");
+      const expected = m.cold("---a-b-", {
+        a: {
+          observer: "next",
+          payload: "a",
+        },
+        b: {
+          observer: "next",
+          payload: "b",
+        },
+      });
+
+      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+
+      const dest = source.proxify({ ipc, channel, uuid });
+      m.expect(dest).toBeObservable(expected);
+    })
+  );
+
+  it(
+    "should emit error reports from source",
+    marbles((m) => {
+      const source = m.hot("---a-#-");
+      const expected = m.cold("---a-b-", {
+        a: {
+          observer: "next",
+          payload: "a",
+        },
+        b: {
+          observer: "error",
+          payload: "error",
+        },
+      });
+
+      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+
+      const dest = source.proxify({ ipc, channel, uuid });
+      m.expect(dest).toBeObservable(expected);
+    })
+  );
+
+  it(
+    "should emit complete reports from source",
+    marbles((m) => {
+      const source = m.hot("---a-|");
+      const expected = m.cold("---a-b", {
+        a: {
+          observer: "next",
+          payload: "a",
+        },
+        b: {
+          observer: "complete",
+          payload: undefined,
+        },
+      });
+
+      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+
+      const dest = source.proxify({ ipc, channel, uuid });
+      m.expect(dest).toBeObservable(expected);
     })
   );
 
@@ -112,7 +196,9 @@ describe("Proxify Operator Tests", () => {
         }
       );
 
-      const destination = source.proxify({ ipc, uuid, channel });
+      const destination = source
+        .proxify({ ipc, uuid, channel })
+        .pluck("payload");
 
       m.expect(destination).toBeObservable(expected);
     })
@@ -137,7 +223,9 @@ describe("Proxify Operator Tests", () => {
       };
       (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
 
-      const destination = source.proxify({ ipc, uuid, channel });
+      const destination = source
+        .proxify({ ipc, uuid, channel })
+        .pluck("payload");
 
       m.expect(destination).toBeObservable(expected);
     })
@@ -173,7 +261,9 @@ describe("Proxify Operator Tests", () => {
         }
       );
 
-      const destination = source.proxify({ ipc, uuid, channel });
+      const destination = source
+        .proxify({ ipc, uuid, channel })
+        .pluck("payload");
       m.expect(destination).toBeObservable(source);
     })
   );
@@ -197,12 +287,14 @@ describe("Proxify Operator Tests", () => {
         }
       );
 
-      const destination = source.proxify({
-        ipc,
-        uuid,
-        channel,
-        preRouteFilter: () => true,
-      });
+      const destination = source
+        .proxify({
+          ipc,
+          uuid,
+          channel,
+          preRouteFilter: () => true,
+        })
+        .pluck("payload");
       m.expect(destination).toBeObservable(source);
     })
   );
@@ -246,7 +338,9 @@ describe("Proxify Operator Tests", () => {
         actualChannel.includes("-subscribed") ? subs : m.cold("-");
       (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
 
-      const destination = source.proxify({ ipc, channel, uuid });
+      const destination = source
+        .proxify({ ipc, channel, uuid })
+        .pluck("payload");
 
       m.expect(destination).toBeObservable("-x-----(yy)");
       m.flush();
@@ -282,30 +376,76 @@ describe("Proxify Operator Tests", () => {
   it(
     "should have sent destination error over ipc",
     marbles((m) => {
-      const source = m.cold("-x-#");
-      // a subscribes, sends over x
-      // b subscribes, both a and b send over y
-      const subs = m.cold("a-b-", subscriberValues);
-      const fromEventImpl = (_target: unknown, actualChannel: string) =>
-        actualChannel.includes("-subscribed") ? subs : m.cold("-");
-      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+      const source = m.hot("---x-#-");
+      const expected = m.cold("---a-b-", {
+        a: {
+          observer: "next",
+          payload: "x",
+        },
+        b: {
+          observer: "error",
+          payload: "error",
+        },
+      });
 
-      const destination = source.proxify({ ipc, channel, uuid });
+      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
-      m.expect(destination).toBeObservable("-x-----(yy)");
+      const dest = source.proxify({ ipc, channel, uuid });
+      m.expect(dest).toBeObservable(expected);
       m.flush();
 
-      expect(sender.send).toHaveBeenCalledWith(`${channel}-${"a"}-next`, "x");
-      expect(sender.send).toHaveBeenCalledTimes(3);
-
+      expect(sender.send).toHaveBeenCalledTimes(2);
       const expectedCalls: [string, string][] = [
         [`${channel}-${"a"}-next`, "x"],
-        [`${channel}-${"a"}-next`, "y"],
-        [`${channel}-${"b"}-next`, "y"],
+        [`${channel}-${"a"}-error`, "error"],
       ];
       const actualCalls = sender.send.mock.calls;
-
       zip<[string, string], [string, string]>(
+        actualCalls,
+        expectedCalls
+      ).forEach(([actualArgs, expectedArgs]) => {
+        if (!(actualArgs && expectedArgs)) {
+          fail(
+            "Expected number of calls does not align with actual number of calls"
+          );
+        }
+        const [actualChannel, actualPayload] = actualArgs;
+        const [expectedChannel, expectedPayload] = expectedArgs;
+
+        expect(actualChannel).toEqual(expectedChannel);
+        expect(actualPayload).toEqual(expectedPayload);
+      });
+    })
+  );
+
+  it(
+    "should have sent destination complete over ipc",
+    marbles((m) => {
+      const source = m.hot("---x-|-");
+      const expected = m.cold("---a-b-", {
+        a: {
+          observer: "next",
+          payload: "x",
+        },
+        b: {
+          observer: "complete",
+          payload: undefined,
+        },
+      });
+
+      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+
+      const dest = source.proxify({ ipc, channel, uuid });
+      m.expect(dest).toBeObservable(expected);
+      m.flush();
+
+      expect(sender.send).toHaveBeenCalledTimes(2);
+      const expectedCalls: [string, string | undefined][] = [
+        [`${channel}-${"a"}-next`, "x"],
+        [`${channel}-${"a"}-complete`, undefined],
+      ];
+      const actualCalls = sender.send.mock.calls;
+      zip<[string, string | undefined], [string, string | undefined]>(
         actualCalls,
         expectedCalls
       ).forEach(([actualArgs, expectedArgs]) => {

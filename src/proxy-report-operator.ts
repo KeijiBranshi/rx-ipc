@@ -21,13 +21,14 @@ function errorReport<T>(payload: Error): ProxyReport<T> {
 function completeReport<T>(): ProxyReport<T> {
   return {
     observer: "complete",
+    payload: undefined,
   };
 }
 
 function mapToProxyReport<T>(this: Observable<T>): Observable<ProxyReport<T>> {
   return this.map((payload) => nextReport(payload)) // for routed "next" payloads
-    .catch((e) => of(errorReport<T>(e))) // for routed "error" payloads
-    .concat(of(completeReport())); // for routed "complete" signals
+    .concat(of(completeReport())) // for routed "complete" signals
+    .catch((e) => of(errorReport<T>(e))); // for routed "error" payloads
 }
 
 declare module "rxjs/Observable" {
