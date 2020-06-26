@@ -88,7 +88,7 @@ export default function proxify<T>(options: ProxifyOptions<T>) {
  * @param this
  * @param options
  */
-function proxifyRxV5<T>(this: Observable<T>, options: ProxyOptions) {
+function proxifyRxV5<T>(this: Observable<T>, options: ProxifyOptions<T>) {
   return proxify(options)(this);
 }
 

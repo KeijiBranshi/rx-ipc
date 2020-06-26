@@ -29,8 +29,7 @@
   "files.exclude": {
     "**/.DS_Store": true,
     "**/.git": true,
-    "dist": true,
-    "node_modules": true
+    "dist": true
   },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
