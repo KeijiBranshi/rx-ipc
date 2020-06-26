@@ -1,6 +1,6 @@
 import { zip } from "lodash";
-import { marbles } from "rxjs-marbles";
 import { Observable } from "rxjs";
+import { marbles } from "rxjs-marbles";
 import "rxjs/add/operator/pluck";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { PartialIpc } from "./types";
@@ -25,17 +25,22 @@ describe("Proxify Operator Tests", () => {
     c: ["c", sender],
   };
 
-  const mockFromEvent = (
+  const mockRxFromEvent = (
     ipcSubs: Observable<unknown>,
     ipcUnsubs: Observable<unknown>,
     fallback: Observable<unknown>
   ) => {
-    const fromEventImpl = (_target: unknown, actualChannel: string) =>
-      actualChannel.includes("-subscribed")
-        ? ipcSubs
-        : actualChannel.includes("-unsubscribed")
-        ? ipcUnsubs
-        : fallback;
+    const fromEventImpl = (_target: unknown, actualChannel: string) => {
+      if (actualChannel.includes(channel)) {
+        if (actualChannel.includes("-subscribed")) {
+          return ipcSubs;
+        }
+        if (actualChannel.includes("-unsubscribed")) {
+          return ipcUnsubs;
+        }
+      }
+      return fallback;
+    };
     (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
   };
 
@@ -51,17 +56,7 @@ describe("Proxify Operator Tests", () => {
       const mockIpcSubs = m.cold("a--b--c", subscriberValues);
       const mockNever = m.cold("-");
 
-      (fromEvent as jest.Mock).mockImplementation(
-        (_target: unknown, actualChannel: string) => {
-          if (
-            actualChannel.includes("-subscribed") &&
-            actualChannel.includes(channel)
-          ) {
-            return mockIpcSubs;
-          }
-          return mockNever;
-        }
-      );
+      mockRxFromEvent(mockIpcSubs, mockNever, mockNever);
 
       const destination = source.proxify({ ipc, uuid, channel });
 
@@ -82,23 +77,7 @@ describe("Proxify Operator Tests", () => {
       const mockIpcUnsubs = m.hot("^-------a-c-b-");
       const mockNever = m.cold("-");
 
-      (fromEvent as jest.Mock).mockImplementation(
-        (_target: unknown, actualChannel: string) => {
-          if (
-            actualChannel.includes("-subscribed") &&
-            actualChannel.includes(channel)
-          ) {
-            return mockIpcSubs;
-          }
-          if (
-            actualChannel.includes("-unsubscribed") &&
-            actualChannel.includes(channel)
-          ) {
-            return mockIpcUnsubs;
-          }
-          return mockNever;
-        }
-      );
+      mockRxFromEvent(mockIpcSubs, mockIpcUnsubs, mockNever);
 
       const destination = source
         .proxify({ ipc, uuid, channel })
@@ -124,7 +103,7 @@ describe("Proxify Operator Tests", () => {
         },
       });
 
-      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+      mockRxFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
       const dest = source.proxify({ ipc, channel, uuid });
       m.expect(dest).toBeObservable(expected);
@@ -146,7 +125,7 @@ describe("Proxify Operator Tests", () => {
         },
       });
 
-      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+      mockRxFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
       const dest = source.proxify({ ipc, channel, uuid });
       m.expect(dest).toBeObservable(expected);
@@ -168,7 +147,7 @@ describe("Proxify Operator Tests", () => {
         },
       });
 
-      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+      mockRxFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
       const dest = source.proxify({ ipc, channel, uuid });
       m.expect(dest).toBeObservable(expected);
@@ -184,17 +163,7 @@ describe("Proxify Operator Tests", () => {
       const mockUnsubs = m.cold("-");
       const mockEmpty = m.cold("|");
 
-      (fromEvent as jest.Mock).mockImplementation(
-        (_target: unknown, ch: string) => {
-          if (ch.includes("-unsubscribed")) {
-            return mockUnsubs;
-          }
-          if (ch.includes("-subscribed")) {
-            return mockSubs;
-          }
-          return mockEmpty;
-        }
-      );
+      mockRxFromEvent(mockSubs, mockUnsubs, mockEmpty);
 
       const destination = source
         .proxify({ ipc, uuid, channel })
@@ -212,16 +181,7 @@ describe("Proxify Operator Tests", () => {
       const ipcSubs = m.cold("---a-bc------", subscriberValues);
       const ipcUnsubs = m.hot("------------b---");
 
-      const fromEventImpl = (_target: unknown, ch: string) => {
-        if (ch.includes("-unsubscribed")) {
-          return ipcUnsubs;
-        }
-        if (ch.includes("-subscribed")) {
-          return ipcSubs;
-        }
-        return m.cold("|");
-      };
-      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+      mockRxFromEvent(ipcSubs, ipcUnsubs, m.cold("|"));
 
       const destination = source
         .proxify({ ipc, uuid, channel })
@@ -249,17 +209,7 @@ describe("Proxify Operator Tests", () => {
       const mockIpcs = m.hot("a", subscriberValues);
       const mockNever = m.cold("-");
 
-      (fromEvent as jest.Mock).mockImplementation(
-        (_target: unknown, actualChannel: string) => {
-          if (
-            actualChannel.includes("-subscribed") &&
-            actualChannel.includes(channel)
-          ) {
-            return mockIpcs;
-          }
-          return mockNever;
-        }
-      );
+      mockRxFromEvent(mockIpcs, mockNever, mockNever);
 
       const destination = source
         .proxify({ ipc, uuid, channel })
@@ -275,17 +225,7 @@ describe("Proxify Operator Tests", () => {
       const ipcSubs = m.hot("a", subscriberValues);
       const never = m.cold("-");
 
-      (fromEvent as jest.Mock).mockImplementation(
-        (_target: unknown, actualChannel: string) => {
-          if (
-            actualChannel.includes("-subscribed") &&
-            actualChannel.includes(channel)
-          ) {
-            return ipcSubs;
-          }
-          return never;
-        }
-      );
+      mockRxFromEvent(ipcSubs, never, never);
 
       const destination = source
         .proxify({
@@ -306,16 +246,7 @@ describe("Proxify Operator Tests", () => {
       const ipcSubs = m.hot("a", subscriberValues);
       const never = m.cold("-");
 
-      const fromEventImpl = (_target: unknown, actualChannel: string) => {
-        if (
-          actualChannel.includes("-subscribed") &&
-          actualChannel.includes(channel)
-        ) {
-          return ipcSubs;
-        }
-        return never;
-      };
-      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+      mockRxFromEvent(ipcSubs, never, never);
 
       const destination = source.proxify({
         ipc,
@@ -334,9 +265,7 @@ describe("Proxify Operator Tests", () => {
       // a subscribes, sends over x
       // b subscribes, both a and b send over y
       const subs = m.cold("a----b---", subscriberValues);
-      const fromEventImpl = (_target: unknown, actualChannel: string) =>
-        actualChannel.includes("-subscribed") ? subs : m.cold("-");
-      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+      mockRxFromEvent(subs, m.cold("-"), m.cold("-"));
 
       const destination = source
         .proxify({ ipc, channel, uuid })
@@ -388,7 +317,7 @@ describe("Proxify Operator Tests", () => {
         },
       });
 
-      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+      mockRxFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
       const dest = source.proxify({ ipc, channel, uuid });
       m.expect(dest).toBeObservable(expected);
@@ -433,7 +362,7 @@ describe("Proxify Operator Tests", () => {
         },
       });
 
-      mockFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
+      mockRxFromEvent(m.cold("-a-", subscriberValues), m.hot("-"), m.cold("-"));
 
       const dest = source.proxify({ ipc, channel, uuid });
       m.expect(dest).toBeObservable(expected);
