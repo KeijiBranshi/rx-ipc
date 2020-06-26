@@ -1,7 +1,7 @@
 import { zip } from "lodash";
 import { marbles } from "rxjs-marbles";
 import { fromEvent } from "rxjs/observable/fromEvent";
-import { PartialIpc } from "./utils";
+import { PartialIpc } from "./types";
 import "./proxify-operator";
 
 jest.mock("rxjs/observable/fromEvent");
@@ -236,7 +236,7 @@ describe("Proxify Operator Tests", () => {
   );
 
   it(
-    `should have sent destination values over ipc`,
+    "should have sent destination values over ipc",
     marbles((m) => {
       const source = m.hot("-x-----y-");
       // a subscribes, sends over x
@@ -270,11 +270,55 @@ describe("Proxify Operator Tests", () => {
             "Expected number of calls does not align with actual number of calls"
           );
         }
-        const [channel, payload] = actualArgs;
+        const [actualChannel, actualPayload] = actualArgs;
         const [expectedChannel, expectedPayload] = expectedArgs;
 
-        expect(channel).toEqual(expectedChannel);
-        expect(payload).toEqual(expectedPayload);
+        expect(actualChannel).toEqual(expectedChannel);
+        expect(actualPayload).toEqual(expectedPayload);
+      });
+    })
+  );
+
+  it(
+    "should have sent destination error over ipc",
+    marbles((m) => {
+      const source = m.cold("-x-#");
+      // a subscribes, sends over x
+      // b subscribes, both a and b send over y
+      const subs = m.cold("a-b-", subscriberValues);
+      const fromEventImpl = (_target: unknown, actualChannel: string) =>
+        actualChannel.includes("-subscribed") ? subs : m.cold("-");
+      (fromEvent as jest.Mock).mockImplementation(fromEventImpl);
+
+      const destination = source.proxify({ ipc, channel, uuid });
+
+      m.expect(destination).toBeObservable("-x-----(yy)");
+      m.flush();
+
+      expect(sender.send).toHaveBeenCalledWith(`${channel}-${"a"}-next`, "x");
+      expect(sender.send).toHaveBeenCalledTimes(3);
+
+      const expectedCalls: [string, string][] = [
+        [`${channel}-${"a"}-next`, "x"],
+        [`${channel}-${"a"}-next`, "y"],
+        [`${channel}-${"b"}-next`, "y"],
+      ];
+      const actualCalls = sender.send.mock.calls;
+
+      zip<[string, string], [string, string]>(
+        actualCalls,
+        expectedCalls
+      ).forEach(([actualArgs, expectedArgs]) => {
+        if (!(actualArgs && expectedArgs)) {
+          fail(
+            "Expected number of calls does not align with actual number of calls"
+          );
+        }
+        const [actualChannel, actualPayload] = actualArgs;
+        const [expectedChannel, expectedPayload] = expectedArgs;
+
+        expect(actualChannel).toEqual(expectedChannel);
+        expect(actualPayload).toEqual(expectedPayload);
       });
     })
   );

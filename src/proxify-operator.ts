@@ -2,12 +2,10 @@ import { IpcRendererEvent, IpcMainEvent } from "electron";
 import { Observable } from "rxjs/Observable";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { Observer } from "rxjs/Observer";
-import {
-  ProxyOptions,
-  ipcObservableChannels,
-  ipcObserverChannels,
-  PartialIpc,
-} from "./utils";
+import { ipcObservableChannels, ipcObserverChannels } from "./utils";
+import { PartialIpc, ProxyOptions, ProxyReport } from "./types";
+import "./proxy-report";
+
 import "rxjs/add/operator/filter";
 import "rxjs/add/operator/do";
 import "rxjs/add/operator/takeUntil";
@@ -66,20 +64,25 @@ function onProxyObservers<T>({
  */
 export default function proxify<T>(options: ProxifyOptions<T>) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
-  return function proxifyOperator(source: Observable<T>): Observable<T> {
+  return function proxifyOperator(
+    source: Observable<T>
+  ): Observable<ProxyReport<T>> {
     const { preRouteFilter } = options;
 
-    return onProxyObservers(options).mergeMap((proxyObserver) => {
-      // for each new proxyObserver
-      return source
-        .filter((next) =>
-          typeof preRouteFilter === "function"
-            ? preRouteFilter(proxyObserver.channel, next)
-            : true
-        )
-        .do(proxyObserver) // route emissions over to proxy observer
-        .takeUntil(proxyObserver.unsubscribed);
-    });
+    return onProxyObservers(options).mergeMap(
+      (proxyObserver): Observable<ProxyReport<T>> => {
+        // for each new proxyObserver
+        return source
+          .filter((next) =>
+            typeof preRouteFilter === "function"
+              ? preRouteFilter(proxyObserver.channel, next)
+              : true
+          )
+          .do(proxyObserver) // route emissions over to proxy observer
+          .mapToProxyReport()
+          .takeUntil(proxyObserver.unsubscribed);
+      }
+    );
   };
 }
 
