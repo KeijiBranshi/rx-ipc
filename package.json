@@ -1,12 +1,12 @@
 {
   "name": "rx-electron",
-  "version": "0.2.0",
+  "version": "1.0.0-beta.0",
   "description": "RxJS utilities for Electron JS",
   "main": "dist/index.js",
   "scripts": {
     "build": "rollup -c",
     "prettify": "prettier --write ./src",
-    "lint": "eslint --fix ./src/create-proxy-observable.ts",
+    "lint": "eslint --fix ./src",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -42,10 +42,12 @@
     "eslint-plugin-import": "^2.21.2",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
+    "lodash": "^4.17.15",
     "prettier": "^2.0.5",
     "rollup": "^2.18.0",
     "rollup-plugin-eslint": "^7.0.0",
     "rollup-plugin-typescript2": "^0.27.1",
+    "rxjs-marbles": "^2.4.1",
     "tslib": "^2.0.0",
     "typescript": "^3.9.5"
   },

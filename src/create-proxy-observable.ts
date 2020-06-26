@@ -1,12 +1,9 @@
 import { Observable } from "rxjs/Observable";
 import { Observer } from "rxjs/Observer";
 import "rxjs/add/operator/mergeMap";
-import {
-  observeOn,
-  ProxyOptions,
-  ipcObserverChannels,
-  ipcObservableChannels,
-} from "./utils";
+
+import { ProxyOptions } from "./types";
+import { observeOn, ipcObserverChannels, ipcObservableChannels } from "./utils";
 
 export default function createProxy<T>(options: ProxyOptions): Observable<T> {
   const { channel, ipc, uuid } = options;
