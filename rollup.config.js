@@ -21,7 +21,6 @@ const commonConfig = {
 
 export default [
   {
-    ...commonConfig,
     input: "src/index.ts",
     output: {
       dir: "dist",
@@ -31,9 +30,12 @@ export default [
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {}),
     ]),
+    plugins: [
+      eslint({ throwOnError: true }),
+      typescript({ useTsconfigDeclarationDir: true }),
+    ],
   },
   {
-    ...commonConfig,
     input: "src/add/operator/proxify.ts",
     output: {
       dir: "dist/add/operator",
@@ -42,8 +44,18 @@ export default [
     external: makeExternalPredicate([
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {}),
-      commonConfig.external,
       "../../index",
     ]),
+    plugins: [
+      eslint({ throwOnError: true }),
+      typescript({
+        useTsconfigDeclarationDir: true,
+        tsconfigOverride: {
+          compilerOptions: {
+            declaration: false,
+          },
+        },
+      }),
+    ],
   },
 ];
