@@ -2,11 +2,12 @@
   "compilerOptions": {
     "module": "esnext",
     "moduleResolution": "node",
+    "declaration": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "removeComments": true,
     "sourceMap": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["./node_modules/*", "./dist/*"]
+  "exclude": ["./node_modules/*", "./dist/*", "./src/**/*.test.*"]
 }
