@@ -1,6 +1,6 @@
 {
   "name": "rx-electron",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "RxJS utilities for Electron JS",
   "main": "dist/index.js",
   "scripts": {
