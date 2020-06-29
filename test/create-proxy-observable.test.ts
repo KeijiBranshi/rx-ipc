@@ -1,5 +1,5 @@
 import { Observable } from "rxjs/Observable";
-import { createProxy } from "./create-proxy-observable";
+import { createProxy } from "../src/create-proxy-observable";
 
 describe("createProxy Tests", () => {
   const channel = "foo";

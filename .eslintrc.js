@@ -12,12 +12,11 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: "./tsconfig.json",
+    project: "./tsconfig.base.json",
     sourceType: "module",
   },
   plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    "linebreak-style": ["error", "unix"],
     quotes: [2, "double", "avoid-escape"],
     "import/no-extraneous-dependencies": [
       "error",

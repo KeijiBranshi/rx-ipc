@@ -1,9 +1,11 @@
 {
   "name": "rx-electron",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "RxJS utilities for Electron JS",
   "main": "dist/index.js",
   "scripts": {
+    "clean": "rimraf dist types",
+    "type-check": "tsc --noEmit --skipLibCheck",
     "build": "rollup -c",
     "prettify": "prettier --write ./src",
     "lint": "eslint --fix ./src",
@@ -22,6 +24,11 @@
   ],
   "author": "Brandon Keiji <brandon.keiji@gmail.com>",
   "license": "MIT",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "types": "./types/index.d.ts",
   "dependencies": {
     "node-uuid": "^1.4.8",
     "rxjs": "^5.5.12"
@@ -44,7 +51,8 @@
     "jest": "^26.1.0",
     "lodash": "^4.17.15",
     "prettier": "^2.0.5",
-    "rollup": "^2.18.0",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.18.1",
     "rollup-plugin-eslint": "^7.0.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "rxjs-marbles": "^2.4.1",

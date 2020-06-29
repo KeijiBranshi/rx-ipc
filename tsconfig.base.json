@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "allowJs": false
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["./node_modules/*", "./dist/*", "./types/*"]
+}
