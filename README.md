@@ -1,4 +1,4 @@
-# RxJS Utilities for Electron
+# RxJS Utility for Electron IPC
 
 ## Modules
 
