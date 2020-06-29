@@ -1,9 +1,22 @@
 import { eslint } from "rollup-plugin-eslint";
 import typescript from "rollup-plugin-typescript2";
+import pkg from "./package.json";
+
+const makeExternalPredicate = (externalArr) => {
+  if (externalArr.length === 0) {
+    return () => false;
+  }
+  const pattern = new RegExp(`^(${externalArr.join("|")})($|/)`);
+  return (id) => pattern.test(id);
+};
 
 const commonConfig = {
-  plugins: [eslint({ throwOnError: true }), typescript()],
-  external: ["rxjs", "node-uuid", "electron"],
+  plugins: [
+    eslint({ throwOnError: true }),
+    typescript({
+      exclude: "*.test.ts",
+    }),
+  ],
 };
 
 export default [
@@ -14,6 +27,10 @@ export default [
       dir: "dist",
       format: "cjs",
     },
+    external: makeExternalPredicate([
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {}),
+    ]),
   },
   {
     ...commonConfig,
@@ -22,6 +39,11 @@ export default [
       dir: "dist/add/operator",
       format: "cjs",
     },
-    external: [...commonConfig.external, "../../index"],
+    external: makeExternalPredicate([
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {}),
+      commonConfig.external,
+      "../../index",
+    ]),
   },
 ];

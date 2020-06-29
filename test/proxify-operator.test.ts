@@ -4,7 +4,7 @@ import { marbles } from "rxjs-marbles";
 import "rxjs/add/operator/pluck";
 import { fromEvent } from "rxjs/observable/fromEvent";
 import { PartialIpc } from "./types";
-import "./add/operator/proxify";
+import "../src/add/operator/proxify";
 
 jest.mock("rxjs/observable/fromEvent");
 
