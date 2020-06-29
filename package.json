@@ -1,7 +1,7 @@
 {
-  "name": "rx-electron",
-  "version": "1.0.0-beta.2",
-  "description": "RxJS utilities for Electron JS",
+  "name": "rx-ipc",
+  "version": "1.0.0",
+  "description": "RxJS utility for Electron JS IPC",
   "main": "dist/index.js",
   "scripts": {
     "clean": "rimraf dist types",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KeijiBranshi/rx-electron.git"
+    "url": "git+https://github.com/KeijiBranshi/rx-ipc.git"
   },
   "keywords": [
     "rxjs",
