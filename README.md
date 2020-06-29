@@ -8,7 +8,7 @@ Create an `Observable` in one process, and remotely observe it from another.
 
 ```javascript
 /** In Renderer Process (nodeIntegration enabled) */
-import "rx-electron/add/operator/proxify";
+import "rx-ipc/add/operator/proxify";
 import { of } from "rxjs/observable/of";
 import { v4 as uuid } from "node-uuid";
 import { ipcRenderer as ipc } from "electron";
@@ -23,7 +23,7 @@ of("foo")
   });
 
 /** In Main Process */
-import { createProxy } from "rx-electron";
+import { createProxy } from "rx-ipc";
 import { ipcMain as ipc } from "electron";
 
 const channel = "some-identifier"; // must match the channel of renderer
