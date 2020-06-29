@@ -44,7 +44,7 @@
     "jest": "^26.1.0",
     "lodash": "^4.17.15",
     "prettier": "^2.0.5",
-    "rollup": "^2.18.0",
+    "rollup": "^2.18.1",
     "rollup-plugin-eslint": "^7.0.0",
     "rollup-plugin-typescript2": "^0.27.1",
     "rxjs-marbles": "^2.4.1",
