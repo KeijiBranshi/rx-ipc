@@ -57,7 +57,13 @@ function onProxyObservers<T>({
 }
 
 /**
- * Written in RxJS v6 style, but exported as RxJS v5 (for now)
+ * Creates an RxJS operator to proxify an existing Observable on the current
+ * process (main or renderer). Values emitted by the source observable
+ * @param options
+ *  @property {() => boolean} preRouteFilter Applies a filter on values emitted across the proxy channel
+ *  @property {string} channel Determines the IPC Channel to use to route proxy emissions
+ *  @property {() => void} uuid UUID Generator used to help track/sync subscriptions across processes
+ *  @property {EventEmitter & Sender } ipc Arbiter for base electron communication (e.g. ipcRenderer, ipcMain + WebContents)
  */
 export default function proxify<T>(options: ProxifyOptions<T>) {
   // Using a factory to make the transition to RxJS 6 syntax a little easier
