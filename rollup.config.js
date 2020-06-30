@@ -38,13 +38,13 @@ export default [
   {
     input: "src/add/operator/proxify.ts",
     output: {
-      dir: "dist/add/operator",
+      dir: "add/operator",
       format: "cjs",
     },
     external: makeExternalPredicate([
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {}),
-      "../../index",
+      "../..",
     ]),
     plugins: [
       eslint({ throwOnError: true }),

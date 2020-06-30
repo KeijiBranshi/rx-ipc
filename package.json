@@ -25,6 +25,7 @@
   "author": "Brandon Keiji <brandon.keiji@gmail.com>",
   "license": "MIT",
   "files": [
+    "add",
     "dist",
     "types"
   ],
