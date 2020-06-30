@@ -6,8 +6,8 @@
 
 Create an `Observable` in one process, and remotely observe it from another.
 
+#### In Renderer Process
 ```javascript
-/** In Renderer Process (nodeIntegration enabled) */
 import "rx-ipc/add/operator/proxify";
 import { of } from "rxjs/observable/of";
 import { v4 as uuid } from "node-uuid";
@@ -21,7 +21,10 @@ proxiedEvents.subscribe(({ observer, payload }) => {
   // `observer` = "next"; `payload` = "foo"
   console.log(`Routed { ${payload} } to { ${observer} } callback in main`);
 });
+```
 
+#### In Main Process
+```javascript
 /** In Main Process */
 import { createProxy } from "rx-ipc";
 import { ipcMain as ipc } from "electron";
@@ -33,6 +36,8 @@ createProxy({ channel, ipc, uuid }).subscribe((payload) => {
   console.log(`Message From Renderer: ${message}`);
 });
 ```
+
+> Note: You could swap the MainProcess and RendererProcess code snippets above, and it would still work
 
 ## TODO
 
