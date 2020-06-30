@@ -1,6 +1,6 @@
 {
   "name": "rx-ipc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "RxJS utility for Electron JS IPC",
   "main": "dist/index.js",
   "scripts": {
