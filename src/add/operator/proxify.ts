@@ -3,9 +3,7 @@ import { proxify } from "../../index";
 import { ProxifyOptions } from "../../types";
 
 /**
- * For RxJS v5 syntax
- * @param this
- * @param options
+ * RxJS v5 Syntax Operator for proxify
  */
 function proxifyRxV5<T>(this: Observable<T>, options: ProxifyOptions<T>) {
   return proxify(options)(this);
