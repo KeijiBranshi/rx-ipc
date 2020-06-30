@@ -14,22 +14,22 @@ import { v4 as uuid } from "node-uuid";
 import { ipcRenderer as ipc } from "electron";
 
 const channel = "some-identifier";
-of("foo")
-  .proxify({ ipc, channel, uuid })
-  .subscribe(({ observer, payload }) => {
-    // maps to a "proxy report"
-    // `observer` = "next"; `payload` = "foo"
-    console.log(`Routed { ${payload} } to { ${payload} } callback in main`);
-  });
+const proxiedEvents = of("foo").proxify({ ipc, channel, uuid });
+
+proxiedEvents.subscribe(({ observer, payload }) => {
+  // maps to a "proxy report"
+  // `observer` = "next"; `payload` = "foo"
+  console.log(`Routed { ${payload} } to { ${observer} } callback in main`);
+});
 
 /** In Main Process */
 import { createProxy } from "rx-ipc";
 import { ipcMain as ipc } from "electron";
 
 const channel = "some-identifier"; // must match the channel of renderer
-createProxy({ channel, ipc, uuid }).subscribe((message) => {
+createProxy({ channel, ipc, uuid }).subscribe((payload) => {
   // Will receive "payload" (from the report above)
-  // `message` = "foo"
+  // `payload` = "foo"
   console.log(`Message From Renderer: ${message}`);
 });
 ```
