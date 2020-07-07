@@ -1,3 +1,4 @@
+import { v4 as uuid } from "node-uuid";
 import { Observable } from "rxjs/Observable";
 import { Observer } from "rxjs/Observer";
 import "rxjs/add/operator/mergeMap";
@@ -9,11 +10,10 @@ import { observeOn, ipcObserverChannels, ipcObservableChannels } from "./utils";
  * Creates on Observable that mirrors values emitted by a proxy in
  * a separate process (dictated by ipc)
  * @param channel Determines the IPC Channel to use to route proxy emissions
- * @param uuid UUID Generator used to help track/sync subscriptions across processes
  * @param ipc Arbiter for base electron communication (e.g. ipcRenderer, ipcMain + WebContents)
  */
 export default function createProxy<T>(options: ProxyOptions): Observable<T> {
-  const { channel, ipc, uuid } = options;
+  const { channel, ipc } = options;
   return Observable.create((observer: Observer<T>) => {
     const subscriptionId = uuid();
     const { subscribe, unsubscribe } = ipcObservableChannels(channel);
