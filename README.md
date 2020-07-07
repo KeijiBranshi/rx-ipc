@@ -10,11 +10,10 @@ Create an `Observable` in one process, and remotely observe it from another.
 ```javascript
 import "rx-ipc/add/operator/proxify";
 import { of } from "rxjs/observable/of";
-import { v4 as uuid } from "node-uuid";
 import { ipcRenderer as ipc } from "electron";
 
 const channel = "some-identifier";
-const proxiedEvents = of("foo").proxify({ ipc, channel, uuid });
+const proxiedEvents = of("foo").proxify({ ipc, channel });
 
 proxiedEvents.subscribe(({ observer, payload }) => {
   // maps to a "proxy report"
@@ -30,7 +29,7 @@ import { createProxy } from "rx-ipc";
 import { ipcMain as ipc } from "electron";
 
 const channel = "some-identifier"; // must match the channel of renderer
-createProxy({ channel, ipc, uuid }).subscribe((payload) => {
+createProxy({ channel, ipc }).subscribe((payload) => {
   // Will receive "payload" (from the report above)
   // `payload` = "foo"
   console.log(`Message From Renderer: ${message}`);
